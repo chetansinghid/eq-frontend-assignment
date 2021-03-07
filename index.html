@@ -8,8 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="./style.css">
-    <!-- PlotlyJS dependency -->
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- ChartJS dependency -->
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous"></script>
+    
 </head>
 <body>
     <div class="container-fluid"> 
@@ -29,25 +32,43 @@
             </div>
             <div class="col-10">
                 <div class="row">
-                    <div class="dropdown">
-                        <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-                            Data Source
-                        </a>
-
-                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                        <li><a class="dropdown-item" href="#" onclick=setDataSource(0)>Hourly Events</a></li>
-                        <li><a class="dropdown-item" href="#" onclick=setDataSource(1)>Daily Events</a></li>
-                        <li><a class="dropdown-item" href="#" onclick=setDataSource(2)>Hourly Source</a></li>
-                        <li><a class="dropdown-item" href="#" onclick=setDataSource(3)>Daily Source</a></li>
-                        <li><a class="dropdown-item" href="#" onclick=setDataSource(4)>POI</a></li>
-                        </ul>
+                    <div class="col">
+                        <div class="dropdown">
+                            <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                                Data Source
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <li><a class="dropdown-item" href="#" onclick=setDataSource(0)>Hourly Events</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=setDataSource(1)>Daily Events</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=setDataSource(2)>Hourly Source</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=setDataSource(3)>Daily Source</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="dropdown" id="additional-options">
+                            <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                                Compare Among
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                            <li><a class="dropdown-item" href="#" onclick=plotDataForStats(0)>Revenue Stats</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=plotDataForStats(1)>Impression Stats</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=plotDataForStats(2)>Clicks Stats</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=plotDataForStats(3)>Impressions Vs Clicks</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=plotDataForStats(4)>Clicks Vs Revenue</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=plotDataForStats(5)>Impressions Vs Revenue</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
+                
                 <div class="row">
                     <div class="tab-content">
                         <div class="tab-pane active" id="chart" role="tabpanel">
-                            Canvas
-                            <canvas id="chart" width="500" height="500"></canvas>
+                             <div id="chart-inner-container">
+                                <canvas id="myChart"></canvas>
+                            </div>
+                            
                         </div>
                         <div class="tab-pane" id="table" role="tabpanel">
                             Table
@@ -62,8 +83,23 @@
     </div>
 </body>
 <script>
+    const stats = Object.freeze({
+        HOURLY: 0,
+        DAILY: 1
+    });
+
     // chart elements and plot functions
+    let ctx = document.getElementById("myChart").getContext('2d');
+    let currentChart = null;
+    let statsData = null;
+    let statsType = null;
+
+    document.getElementById("additional-options").classList.add("d-none");
     function setDataSource(n) {
+        if(currentChart) {
+            currentChart.destroy();
+        }
+        document.getElementById("additional-options").classList.add("d-none");
         let url;
         switch(n) {
             case 0: url = "https://proximal-ring-pipe.glitch.me/events/hourly";
@@ -74,8 +110,6 @@
             break;
             case 3: url = "https://proximal-ring-pipe.glitch.me/stats/daily";
             break;
-            case 4: url = "https://proximal-ring-pipe.glitch.me/poi";
-            break;
             default: break;
         }
         fetch(url)
@@ -84,15 +118,211 @@
         })
         .then(data => {
             console.log(data);
-            plotData(data)
+            switch(n) {
+                case 0: parseDataForEvent(n, data);
+                break;
+                case 1: parseDataForEvent(n, data);
+                break;
+                case 2: document.getElementById("additional-options").classList.remove("d-none");
+                parseDataForStats(0, data);
+                break;
+                case 3: document.getElementById("additional-options").classList.remove("d-none");
+                parseDataForStats(1, data);
+                break;
+                default: break;
+            }
         })
         .error(error => {
             console.log(error); 
         })
     }
 
-    function plotData(data) {
+// Functions for events
+    function parseDataForEvent(n, data) {
+        let dates = [];
+        let events = [];
+        if(n==0) {
+            data.forEach(element => {
+                let date = new Date(element.date);
+                date.setHours(Number(element.hour));
+                let label = createTimeLabel(date, false);
+                dates.push(label);
+                events.push(element.events);
+            });
+            plotSingleData(dates, events, "No. of hourly Events");
+        }
+        else {
+            data.forEach(element => {
+                let label = createTimeLabel(element.date, true);
+                dates.push(label);
+                events.push(element.events);
+            })
+            plotSingleData(dates, events, "No. of Daily Events");
+        }
+        
+    }
 
+    
+// Functions for stats
+    function parseDataForStats(n, data) {
+        let dates = [];
+        let impressions = [];
+        let clicks = [];
+        let revenue = [];
+        if(n==0) {
+            data.forEach(element => {
+                let date = new Date(element.date);
+                date.setHours(Number(element.hour));
+                let label = createTimeLabel(date, false);
+                dates.push(label);
+                impressions.push(element.impressions / 1000);
+                clicks.push(element.clicks);
+                revenue.push(element.revenue);
+            });
+            statsData = {
+                "dates" : dates,
+                "impressions": impressions,
+                "clicks" : clicks,
+                "revenue" : revenue
+            }
+            statsType = "Hourly";
+        }
+        else {
+            data.forEach(element => {
+                let label = createTimeLabel(element.date, true);
+                dates.push(label);
+                impressions.push(element.impressions / 1000);
+                clicks.push(element.clicks);
+                revenue.push(element.revenue);
+            })
+            statsData = {
+                "dates" : dates,
+                "impressions": impressions,
+                "clicks" : clicks,
+                "revenue" : revenue
+            }
+            statsType = "Daily";
+        }
+    }
+               
+    function plotDataForStats(n) {
+        
+        switch(n) {
+            case 0: //Revenue Stats
+                plotSingleData(statsData.dates, statsData.revenue, `${statsType} Revenue`);
+                break;
+            case 1: // Impression Stats
+                plotSingleData(statsData.dates, statsData.impressions, `${statsType} Impressions (in thousands)`);
+                break;
+            case 2: // Clicks Stats
+                plotSingleData(statsData.dates, statsData.clicks, `${statsType} Clicks`);
+                break;
+            case 3: //Impressions Vs Clicks (Over Time)
+                plotMixedData(statsData.dates, statsData.impressions, `${statsType} Impressions (in thousands)`, statsData.clicks, `${statsType} Clicks`);
+                break;
+            case 4: //Clicks Vs Revenue (Over Time)
+                plotMixedData(statsData.dates, statsData.clicks, `${statsType} Clicks`, statsData.revenue, `${statsType} Revenue`);
+                break;
+            case 5: //Impressions Vs Revenue (Over Time)
+                plotMixedData(statsData.dates, statsData.impressions, `${statsType} Impressions (in thousands)`, statsData.revenue, `${statsType} Revenue`);
+                break;
+            default: break;
+        } 
+
+    }
+
+    // Plotting functions
+    function plotSingleData(xData, yData, yLabel) {
+        if(currentChart) {
+            currentChart.destroy();
+        }
+        document.getElementById("chart-inner-container").style.width = `${xData.length * 20}px`;
+        currentChart = new Chart(ctx, {
+            // The type of chart we want to create
+            type: 'line',
+            // The data for our dataset
+            data: {
+                labels: xData,
+                datasets: [{
+                    label: yLabel,
+                    backgroundColor: 'rgb(255, 99, 132)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    data: yData,
+                    fill: false
+                }]
+            },
+
+            // Configuration options go here
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                        xAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Time'
+                        }
+                        }],
+                        yAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: `${yLabel} Count`
+                        }
+                        }]
+                    } 
+            }
+        });     
+    }
+
+    function plotMixedData(xAxis, dataOne, dataOneLabel, dataTwo, dataTwoLabel) {
+        if(currentChart) {
+            currentChart.destroy();
+        }
+        document.getElementById("chart-inner-container").style.width = `${xAxis.length * 20}px`;
+        currentChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: dataOneLabel,
+                    data: dataOne,
+                    borderColor: 'rgb(255, 99, 132)',
+                    fill: false,
+                    // this dataset is drawn below
+                    order: 1
+                }, {
+                    label: dataTwoLabel,
+                    data: dataTwo,
+                    type: 'line',
+                    borderColor: 'rgb(255, 99, 255)',
+                    fill: false,
+                    // this dataset is drawn on top
+                    order: 2
+                }],
+                labels: xAxis
+            },
+            options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        xAxes: [{
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Time'
+                        }
+                        }]
+                    } 
+            }
+        });
+    }
+
+    function createTimeLabel(date, dateOnly) {
+        if (!dateOnly) {
+            return `${moment(date).format('ll')}, ${moment(date).format("LT")}`;
+        }
+        else {
+            return `${moment(date).format('ll')}`;
+        }
+        
     }
     
 </script>

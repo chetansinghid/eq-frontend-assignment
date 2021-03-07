@@ -6,3 +6,16 @@
     margin: 1em 0.5em;
 
 }
+
+#chart {
+    padding: 10px;
+        position: relative;
+        overflow-x: scroll;
+        width: 100%;
+}
+
+#chart-inner-container {
+    height: 500px;
+    width: 100%;
+    min-width: 100%
+}
