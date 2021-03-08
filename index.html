@@ -7,9 +7,8 @@
     <!-- Bootstrap dependancies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="./style.css">
-    <!-- ChartJS dependency -->
-    
+    <link rel="stylesheet" href="./styles/style.css">
+    <!-- ChartJS dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous"></script>
     
@@ -25,9 +24,9 @@
                 <!-- <div role="tabpanel"> -->
                     <!-- List group -->
                     <div class="list-group list-group-flush" id="myList" role="tablist">
-                      <a class="list-group-item list-group-item-action active" data-bs-toggle="list" href="#chart" role="tab">Chart</a>
-                      <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#table" role="tab">Table</a>
-                      <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#map" role="tab">Map</a>
+                      <a class="list-group-item list-group-item-action active" data-bs-toggle="list" href="#chart" role="tab" onclick=setChartVars()>Chart</a>
+                      <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#table" role="tab" onclick=setTableVars()>Table</a>
+                      <a class="list-group-item list-group-item-action" data-bs-toggle="list" href="#map" role="tab" onclick=setMapVars()>Map</a>
                     </div>
             </div>
             <div class="col-10">
@@ -40,8 +39,9 @@
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                             <li><a class="dropdown-item" href="#" onclick=setDataSource(0)>Hourly Events</a></li>
                             <li><a class="dropdown-item" href="#" onclick=setDataSource(1)>Daily Events</a></li>
-                            <li><a class="dropdown-item" href="#" onclick=setDataSource(2)>Hourly Source</a></li>
-                            <li><a class="dropdown-item" href="#" onclick=setDataSource(3)>Daily Source</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=setDataSource(2)>Hourly Stats</a></li>
+                            <li><a class="dropdown-item" href="#" onclick=setDataSource(3)>Daily Stats</a></li>
+                            <li id="removeForChart"><a class="dropdown-item" href="#" onclick=setDataSource(4)>POI</a></li>
                             </ul>
                         </div>
                     </div>
@@ -68,10 +68,49 @@
                              <div id="chart-inner-container">
                                 <canvas id="myChart"></canvas>
                             </div>
-                            
                         </div>
                         <div class="tab-pane" id="table" role="tabpanel">
-                            Table
+                            <div id="myTable">
+                                
+                                <table class="table" id="eventsTable">
+                                    <caption>Events Data</caption>
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Event Time</th>
+                                            <th>No. of Events</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="eventsTableBody"></tbody>
+                                </table>
+
+                                <table class="table" id="statsTable">
+                                    <caption>Stats Data</caption>
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>Impression Count</th>
+                                            <th>Click Count</th>
+                                            <th>Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="statsTableBody"></tbody>
+                                    
+                                </table>
+                                <table class="table" id="poiTable">
+                                    <caption>POI Data</caption>
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>POI ID</th>
+                                            <th>Name</th>
+                                            <th>Latitude</th>
+                                            <th>Longitude</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="poiTableBody"></tbody>
+                                    
+                                </table>
+                            </div>
+                            
                         </div>
                         <div class="tab-pane" id="map" role="tabpanel">
                             Map
@@ -82,248 +121,14 @@
           </div>  
     </div>
 </body>
+
+<script src="./scripts/dataParser.js"></script>
+<script src="./scripts/charts.js"></script>
+<script src="./scripts/table.js"></script>
+<script src="./scripts/main.js"></script>
 <script>
-    const stats = Object.freeze({
-        HOURLY: 0,
-        DAILY: 1
-    });
-
-    // chart elements and plot functions
-    let ctx = document.getElementById("myChart").getContext('2d');
-    let currentChart = null;
-    let statsData = null;
-    let statsType = null;
-
-    document.getElementById("additional-options").classList.add("d-none");
-    function setDataSource(n) {
-        if(currentChart) {
-            currentChart.destroy();
-        }
-        document.getElementById("additional-options").classList.add("d-none");
-        let url;
-        switch(n) {
-            case 0: url = "https://proximal-ring-pipe.glitch.me/events/hourly";
-            break;
-            case 1: url = "https://proximal-ring-pipe.glitch.me/events/daily";
-            break;
-            case 2: url = "https://proximal-ring-pipe.glitch.me/stats/hourly";
-            break;
-            case 3: url = "https://proximal-ring-pipe.glitch.me/stats/daily";
-            break;
-            default: break;
-        }
-        fetch(url)
-        .then(data => {
-            return data.json();
-        })
-        .then(data => {
-            console.log(data);
-            switch(n) {
-                case 0: parseDataForEvent(n, data);
-                break;
-                case 1: parseDataForEvent(n, data);
-                break;
-                case 2: document.getElementById("additional-options").classList.remove("d-none");
-                parseDataForStats(0, data);
-                break;
-                case 3: document.getElementById("additional-options").classList.remove("d-none");
-                parseDataForStats(1, data);
-                break;
-                default: break;
-            }
-        })
-        .error(error => {
-            console.log(error); 
-        })
-    }
-
-// Functions for events
-    function parseDataForEvent(n, data) {
-        let dates = [];
-        let events = [];
-        if(n==0) {
-            data.forEach(element => {
-                let date = new Date(element.date);
-                date.setHours(Number(element.hour));
-                let label = createTimeLabel(date, false);
-                dates.push(label);
-                events.push(element.events);
-            });
-            plotSingleData(dates, events, "No. of hourly Events");
-        }
-        else {
-            data.forEach(element => {
-                let label = createTimeLabel(element.date, true);
-                dates.push(label);
-                events.push(element.events);
-            })
-            plotSingleData(dates, events, "No. of Daily Events");
-        }
-        
-    }
-
     
-// Functions for stats
-    function parseDataForStats(n, data) {
-        let dates = [];
-        let impressions = [];
-        let clicks = [];
-        let revenue = [];
-        if(n==0) {
-            data.forEach(element => {
-                let date = new Date(element.date);
-                date.setHours(Number(element.hour));
-                let label = createTimeLabel(date, false);
-                dates.push(label);
-                impressions.push(element.impressions / 1000);
-                clicks.push(element.clicks);
-                revenue.push(element.revenue);
-            });
-            statsData = {
-                "dates" : dates,
-                "impressions": impressions,
-                "clicks" : clicks,
-                "revenue" : revenue
-            }
-            statsType = "Hourly";
-        }
-        else {
-            data.forEach(element => {
-                let label = createTimeLabel(element.date, true);
-                dates.push(label);
-                impressions.push(element.impressions / 1000);
-                clicks.push(element.clicks);
-                revenue.push(element.revenue);
-            })
-            statsData = {
-                "dates" : dates,
-                "impressions": impressions,
-                "clicks" : clicks,
-                "revenue" : revenue
-            }
-            statsType = "Daily";
-        }
-    }
-               
-    function plotDataForStats(n) {
-        
-        switch(n) {
-            case 0: //Revenue Stats
-                plotSingleData(statsData.dates, statsData.revenue, `${statsType} Revenue`);
-                break;
-            case 1: // Impression Stats
-                plotSingleData(statsData.dates, statsData.impressions, `${statsType} Impressions (in thousands)`);
-                break;
-            case 2: // Clicks Stats
-                plotSingleData(statsData.dates, statsData.clicks, `${statsType} Clicks`);
-                break;
-            case 3: //Impressions Vs Clicks (Over Time)
-                plotMixedData(statsData.dates, statsData.impressions, `${statsType} Impressions (in thousands)`, statsData.clicks, `${statsType} Clicks`);
-                break;
-            case 4: //Clicks Vs Revenue (Over Time)
-                plotMixedData(statsData.dates, statsData.clicks, `${statsType} Clicks`, statsData.revenue, `${statsType} Revenue`);
-                break;
-            case 5: //Impressions Vs Revenue (Over Time)
-                plotMixedData(statsData.dates, statsData.impressions, `${statsType} Impressions (in thousands)`, statsData.revenue, `${statsType} Revenue`);
-                break;
-            default: break;
-        } 
-
-    }
-
-    // Plotting functions
-    function plotSingleData(xData, yData, yLabel) {
-        if(currentChart) {
-            currentChart.destroy();
-        }
-        document.getElementById("chart-inner-container").style.width = `${xData.length * 20}px`;
-        currentChart = new Chart(ctx, {
-            // The type of chart we want to create
-            type: 'line',
-            // The data for our dataset
-            data: {
-                labels: xData,
-                datasets: [{
-                    label: yLabel,
-                    backgroundColor: 'rgb(255, 99, 132)',
-                    borderColor: 'rgb(255, 99, 132)',
-                    data: yData,
-                    fill: false
-                }]
-            },
-
-            // Configuration options go here
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                        xAxes: [{
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'Time'
-                        }
-                        }],
-                        yAxes: [{
-                        scaleLabel: {
-                            display: true,
-                            labelString: `${yLabel} Count`
-                        }
-                        }]
-                    } 
-            }
-        });     
-    }
-
-    function plotMixedData(xAxis, dataOne, dataOneLabel, dataTwo, dataTwoLabel) {
-        if(currentChart) {
-            currentChart.destroy();
-        }
-        document.getElementById("chart-inner-container").style.width = `${xAxis.length * 20}px`;
-        currentChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: [{
-                    label: dataOneLabel,
-                    data: dataOne,
-                    borderColor: 'rgb(255, 99, 132)',
-                    fill: false,
-                    // this dataset is drawn below
-                    order: 1
-                }, {
-                    label: dataTwoLabel,
-                    data: dataTwo,
-                    type: 'line',
-                    borderColor: 'rgb(255, 99, 255)',
-                    fill: false,
-                    // this dataset is drawn on top
-                    order: 2
-                }],
-                labels: xAxis
-            },
-            options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        xAxes: [{
-                        scaleLabel: {
-                            display: true,
-                            labelString: 'Time'
-                        }
-                        }]
-                    } 
-            }
-        });
-    }
-
-    function createTimeLabel(date, dateOnly) {
-        if (!dateOnly) {
-            return `${moment(date).format('ll')}, ${moment(date).format("LT")}`;
-        }
-        else {
-            return `${moment(date).format('ll')}`;
-        }
-        
-    }
+    
     
 </script>
 </html>
