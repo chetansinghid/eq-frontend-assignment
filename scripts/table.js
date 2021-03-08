@@ -1,4 +1,5 @@
 function populateTable(n) {
+    currentTable = n;
     document.getElementById("eventsTable").classList.add("d-none");
     document.getElementById("statsTable").classList.add("d-none");
     document.getElementById("poiTable").classList.add("d-none");
@@ -81,8 +82,77 @@ function populateTable(n) {
                 cell = row.insertCell(-1);
                 cell.innerHTML = poiData.lons[i];
             }
+          
+          
             break;
         
         default: break;
     }
+}
+
+function updateVal() {
+    let searchString = document.getElementById("searchText").value;
+    
+    if(searchString !== "") {
+        let data;
+        let table;
+        switch(currentTable) {
+            case 0: 
+            case 1:
+                table = document.getElementById("eventsTableBody").getElementsByTagName("td");
+                for(let i = 0; i < table.length; i++) {
+                    if(match(searchString, table[i].innerHTML)) {
+                        console.log(1);
+                        table[i].style.background = "yellow";
+                    }
+                }
+                break;
+            case 2:
+            case 3: 
+                table = document.getElementById("statsTableBody").getElementsByTagName("td");
+                for(let i = 0; i < table.length; i++) {
+                    if(match(searchString, table[i].innerHTML)) {
+                        console.log(1);
+                        table[i].style.background = "yellow";
+                    }
+                }
+                break;
+            case 4: 
+                table = document.getElementById("poiTableBody").getElementsByTagName("td");
+                
+                for(let i = 0; i < table.length; i++) {
+                    if(match(searchString, table[i].innerHTML)) {
+                        console.log(1);
+                        table[i].style.background = "yellow";
+                    }
+                }
+                break;
+            default: break;
+        }
+        
+    }
+    if(document.getElementById("searchText").value === "") {
+        console.log("empty");
+        populateTable(currentTable);
+        
+    }
+}
+
+// Fuzzy search method
+
+function match(search, text) {
+    search = search.toUpperCase();
+    text = text.toUpperCase();
+
+    var j = -1; // remembers position of last found character
+
+    // consider each search character one at a time
+    for (var i = 0; i < search.length; i++) {
+        var l = search[i];
+        if (l == ' ') continue;     // ignore spaces
+
+        j = text.indexOf(l, j+1);     // search for character & update position
+        if (j == -1) return false;  // if it's not found, exclude this item
+    }
+    return true;
 }

@@ -7,6 +7,12 @@ const selection = Object.freeze({
     MAP: 2
 });
 
+const dataTypes = Object.freeze({
+    HOURLY_EVENTS: 0,
+    DAILY_EVENTS: 1,
+    HOURLY_STATS: 2
+})
+
 const FETCH_WAIT = 10000;
 // Chart Vars
 let ctx = document.getElementById("myChart").getContext('2d');
@@ -18,7 +24,7 @@ let statsType = null;
 let selectedTab = null;
 
 // Table Vars
-
+let currentTable = null;
 // Map Vars
 
 setChartVars();
@@ -26,8 +32,8 @@ setChartVars();
 function setDataSource(n) {
     if(selectedTab == selection.CHART && currentChart) {
         currentChart.destroy();
-        document.getElementById("additional-options").classList.add("d-none");
     }
+    document.getElementById("additional-options").classList.add("d-none");
     let fetchData = false;
     let url;
     // checks weather data fetched before 10 sec or not
@@ -51,6 +57,10 @@ function setDataSource(n) {
             url = "https://proximal-ring-pipe.glitch.me/events/daily";
             break;
         case 2: 
+        // update view for addtional options
+            if(selectedTab == selection.CHART) {
+                document.getElementById("additional-options").classList.remove("d-none");
+            }
             if(statsData.hourly && statsData.hourly.time > (Date.now() - FETCH_WAIT)) {
                 statsType = "Hourly";
             }
@@ -60,6 +70,10 @@ function setDataSource(n) {
             url = "https://proximal-ring-pipe.glitch.me/stats/hourly";
             break;
         case 3: 
+        // Update view for additional options
+            if(selectedTab == selection.CHART) {
+                document.getElementById("additional-options").classList.remove("d-none");
+            }
             if(statsData.daily && statsData.daily.time > (Date.now() - FETCH_WAIT)) {
                 statsType = "Daily";
             }
@@ -95,15 +109,10 @@ function setDataSource(n) {
                     parseDataForEvent(n, data);
                     break;
                 case 2: 
-                    if(selectedTab == selection.CHART) {
-                        document.getElementById("additional-options").classList.remove("d-none");
-                    }
+                    
                     parseDataForStats(0, data);
                     break;
                 case 3:
-                    if(selectedTab == selection.CHART) {
-                        document.getElementById("additional-options").classList.remove("d-none");
-                    }
                     parseDataForStats(1, data);
                     break;
                     // add for POI
@@ -121,14 +130,11 @@ function setDataSource(n) {
         // Uses cached data instead of fetching data again
         switch(selectedTab) {
             case selection.CHART:
-                if(n == 0 || n == 1) {
-                    console.log();
-                    if(statsType === "Hourly") {
-                        plotSingleData(eventData.hourly.dates, eventData.hourly.events, `No. of ${statsType} Events`);
-                    }
-                    else {
-                        plotSingleData(eventData.daily.dates, eventData.daily.events, `No. of ${statsType} Events`);
-                    }
+                if(n == 0) {
+                    plotSingleData(eventData.hourly.dates, eventData.hourly.events, `No. of ${statsType} Events`);
+                }
+                if(n == 1) {
+                    plotSingleData(eventData.daily.dates, eventData.daily.events, `No. of ${statsType} Events`);
                 }
                 break;
             case selection.TABLE:
@@ -146,6 +152,7 @@ function setDataSource(n) {
 function setChartVars() {
     document.getElementById('additional-options').classList.add('d-none');
     document.getElementById("removeForChart").classList.add('d-none');
+    document.getElementById("search-bar").classList.add('d-none');
     if(currentChart) {
         currentChart.destroy();
     }
@@ -168,22 +175,13 @@ function setTableVars() {
     document.getElementById("eventsTable").classList.add("d-none");
     document.getElementById("statsTable").classList.add("d-none");
     document.getElementById("poiTable").classList.add("d-none");
+    document.getElementById("search-bar").classList.remove('d-none');
+    document.getElementById("searchText").addEventListener("input", updateVal);
     selectedTab = selection.TABLE;
+    currentTable = null;
 }
 
 function setMapVars() {
     document.getElementById('additional-options').classList.add('d-none');
     selectedTab = selection.MAP;
 }
-
-
-// Fuzzy search method
-String.prototype.fuzzy = function (s) {
-    var hay = this.toLowerCase(), i = 0, n = -1, l;
-    s = s.toLowerCase();
-    for (; l = s[i++] ;) if (!~(n = hay.indexOf(l, n + 1))) return false;
-    return true;
-};
-
-// ('a haystack with a needle').fuzzy('hay sucks');    // false
-// ('a haystack with a needle').fuzzy('sack hand');    // true
