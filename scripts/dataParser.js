@@ -1,7 +1,10 @@
 // DATA PARSER
 // Data parsing functions
 
-// Functions for events
+// Function for events data
+// args:
+// 1. n - for the selection among hourly and daily events
+// 2. data - json data for parsing
 function parseDataForEvent(n, data) {
     let dates = [];
     let events = [];
@@ -52,7 +55,10 @@ function parseDataForEvent(n, data) {
     
 }
 
-// Functions for stats
+// Functions for stats data
+// args:
+// 1. n - for the selection among hourly and daily events
+// 2. data - json data for parsing
 function parseDataForStats(n, data) {
     let dates = [];
     let impressions = [];
@@ -114,7 +120,9 @@ function parseDataForStats(n, data) {
     }
 }
 
-
+// Function to parse POI data
+// args:
+// 1. data - json data for parsing
 function parseDataForPOI(data) {
     let names = [];
     let ids = [];
@@ -136,6 +144,10 @@ function parseDataForPOI(data) {
     populateTable(4);
 }
 
+// Function to create time label from date object
+// args:
+// 1. date - date object
+// 2. dateOnly - boolean, to check if only date needs to be parsed
 function createTimeLabel(date, dateOnly) {
     if (!dateOnly) {
         return `${moment(date).format('ll')}, ${moment(date).format("LT")}`;
@@ -146,6 +158,7 @@ function createTimeLabel(date, dateOnly) {
     
 }
 
+// function to round off the values to two decimals
 function parse(x) {
     return Number.parseFloat(x).toFixed(2);
   }

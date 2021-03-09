@@ -11,7 +11,8 @@
     <!-- ChartJS dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous"></script>
-    
+    <!-- D3 dependency -->
+    <script src="https://d3js.org/d3.v4.js"></script>
 </head>
 <body>
     <div class="container-fluid"> 
@@ -32,7 +33,7 @@
             <div class="col-10">
                 <div class="row">
                     <div class="col">
-                        <div class="dropdown">
+                        <div class="dropdown" id="mainOptions">
                             <a class="btn btn-warning dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                                 Data Source
                             </a>
@@ -44,6 +45,16 @@
                             <li id="removeForChart"><a class="dropdown-item" href="#" onclick=setDataSource(4)>POI</a></li>
                             </ul>
                         </div>
+                    </div>
+                    <div class="col">
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons" id="chartType">
+                            <label class="btn btn-info active">
+                              <input type="radio" name="options" id="option1" autocomplete="off" checked onclick=updateChart(0)> Bar
+                            </label>
+                            <label class="btn btn-info">
+                              <input type="radio" name="options" id="option2" autocomplete="off" onclick=updateChart(1)> Line
+                            </label>
+                          </div>
                     </div>
                     <div class="col">
                         <div class="dropdown" id="additional-options">
@@ -118,7 +129,7 @@
                             
                         </div>
                         <div class="tab-pane" id="map" role="tabpanel">
-                            Map
+                            <div id="myMap"></div>
                         </div>
                     </div>
                 </div>
@@ -126,16 +137,9 @@
           </div>  
     </div>
 </body>
-
 <script src="./scripts/dataParser.js"></script>
 <script src="./scripts/charts.js"></script>
 <script src="./scripts/table.js"></script>
+<script src="./scripts/map.js"></script>
 <script src="./scripts/main.js"></script>
-<script>
-    
-    
-    
-
-    
-</script>
 </html>

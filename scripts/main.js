@@ -1,39 +1,50 @@
 // MAIN SCRIPT
 // Global behavior on page load
 
+// CONST vars for global scope
+// selection enum for specifying the selected window
 const selection = Object.freeze({
     CHART: 0,
     TABLE: 1,
     MAP: 2
 });
 
-const dataTypes = Object.freeze({
-    HOURLY_EVENTS: 0,
-    DAILY_EVENTS: 1,
-    HOURLY_STATS: 2
-})
-
+// Fetch wait time in milliseconds
 const FETCH_WAIT = 10000;
-// Chart Vars
-let ctx = document.getElementById("myChart").getContext('2d');
-let currentChart = null;
+// selected tab tracker
+let selectedTab = null;
+// Data Vars
 let eventData = null;
 let statsData = null;
 let poiData = null;
 let statsType = null;
-let selectedTab = null;
+
+// Chart Vars
+let ctx = document.getElementById("myChart").getContext('2d');
+let currentChart = null;
+let chartType = null;
+let chartId = null;
 
 // Table Vars
 let currentTable = null;
-// Map Vars
 
+// Map Vars
+let mapData = null;
+
+// Initial call on page load
 setChartVars();
 
+// callback function for selection of main options
+// upon selection of data source
 function setDataSource(n) {
     if(selectedTab == selection.CHART && currentChart) {
         currentChart.destroy();
     }
-    document.getElementById("additional-options").classList.add("d-none");
+    if(selectedTab == selection.CHART) {
+        chartId = [];
+        chartId.push(n)
+    }
+    hideElementById(["additional-options"]);
     let fetchData = false;
     let url;
     // checks weather data fetched before 10 sec or not
@@ -59,7 +70,7 @@ function setDataSource(n) {
         case 2: 
         // update view for addtional options
             if(selectedTab == selection.CHART) {
-                document.getElementById("additional-options").classList.remove("d-none");
+                showElementById(["additional-options"]);
             }
             if(statsData.hourly && statsData.hourly.time > (Date.now() - FETCH_WAIT)) {
                 statsType = "Hourly";
@@ -72,7 +83,7 @@ function setDataSource(n) {
         case 3: 
         // Update view for additional options
             if(selectedTab == selection.CHART) {
-                document.getElementById("additional-options").classList.remove("d-none");
+                showElementById(["additional-options"]);
             }
             if(statsData.daily && statsData.daily.time > (Date.now() - FETCH_WAIT)) {
                 statsType = "Daily";
@@ -109,7 +120,6 @@ function setDataSource(n) {
                     parseDataForEvent(n, data);
                     break;
                 case 2: 
-                    
                     parseDataForStats(0, data);
                     break;
                 case 3:
@@ -149,14 +159,18 @@ function setDataSource(n) {
     
 }
 
+// Initial load callback functions for each tab
+
+// chart tab load function
 function setChartVars() {
-    document.getElementById('additional-options').classList.add('d-none');
-    document.getElementById("removeForChart").classList.add('d-none');
-    document.getElementById("search-bar").classList.add('d-none');
+    hideElementById(['additional-options', "removeForChart", "search-bar"]);
+    showElementById(['chartType', 'mainOptions']);
+   
     if(currentChart) {
         currentChart.destroy();
     }
     currentChart = null;
+    chartType = 'bar';
     eventData = {
         hourly: null,
         daily: null
@@ -166,22 +180,52 @@ function setChartVars() {
         hourly: null,
         daily: null
     };
+    chartId = [];
     selectedTab = selection.CHART;
 }
 
+// table tab load function
 function setTableVars() {
-    document.getElementById('additional-options').classList.add('d-none');
-    document.getElementById("removeForChart").classList.remove('d-none');
-    document.getElementById("eventsTable").classList.add("d-none");
-    document.getElementById("statsTable").classList.add("d-none");
-    document.getElementById("poiTable").classList.add("d-none");
-    document.getElementById("search-bar").classList.remove('d-none');
+    showElementById(["removeForChart", "search-bar", "mainOptions"]);
+    hideElementById(['additional-options',"eventsTable", "statsTable", "poiTable", 'chartType']);
     document.getElementById("searchText").addEventListener("input", updateVal);
+    
     selectedTab = selection.TABLE;
     currentTable = null;
 }
 
+// Map tab load
 function setMapVars() {
-    document.getElementById('additional-options').classList.add('d-none');
+    hideElementById(['additional-options', "search-bar", 'chartType', 'mainOptions']);
+    showElementById(['additional-options']);
     selectedTab = selection.MAP;
+    mapData = {
+        eventhourly: null,
+        eventdaily: null, 
+        stathourly: null, 
+        statdaily: null, 
+        poi: null
+    }
+    document.getElementById("myMap").innerHTML = "";
+    fetchDataForMap();
+    
 }
+
+// Function to show elements
+// args
+// 1. elementsArr: elements array to show
+function showElementById(elementsArr) {
+    elementsArr.forEach(elem => {
+        document.getElementById(elem).classList.remove('d-none');
+    })
+}
+
+// Function to hide elements
+// args
+// 1. elementsArr: elements array to hide
+function hideElementById(elementsArr) {
+    elementsArr.forEach(elem => {
+        document.getElementById(elem).classList.add('d-none');
+    })
+}
+

@@ -1,7 +1,17 @@
+// CHARTS.JS
 // chart elements and plot functions
-           
+
+
+// router to plot the stats data as per the option selected for the additional 'compare among'
+// options for charts
 function plotDataForStats(n) {
     let accessRef = null;
+    if(chartId.length == 1) {
+        chartId.push(n);
+    }
+    else {
+        chartId[1] = n;
+    }
     if(statsType ===  "Hourly") {
         accessRef = statsData.hourly;
     }
@@ -33,21 +43,24 @@ function plotDataForStats(n) {
 }
 
 // Plotting functions
+
+// Plots single value over time
 function plotSingleData(xData, yData, yLabel) {
     if(currentChart) {
         currentChart.destroy();
     }
     document.getElementById("chart-inner-container").style.width = `${xData.length * 20}px`;
+    let color = randomColor();
     currentChart = new Chart(ctx, {
         // The type of chart we want to create
-        type: 'line',
+        type: chartType,
         // The data for our dataset
         data: {
             labels: xData,
             datasets: [{
                 label: yLabel,
-                backgroundColor: 'rgb(255, 99, 132)',
-                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: color,
+                borderColor: color,
                 data: yData,
                 fill: false
             }]
@@ -75,18 +88,21 @@ function plotSingleData(xData, yData, yLabel) {
     });     
 }
 
+// plots two values over time
 function plotMixedData(xAxis, dataOne, dataOneLabel, dataTwo, dataTwoLabel) {
     if(currentChart) {
         currentChart.destroy();
     }
     document.getElementById("chart-inner-container").style.width = `${xAxis.length * 20}px`;
+    let color = randomColor();
     currentChart = new Chart(ctx, {
-        type: 'line',
+        type: chartType,
         data: {
             datasets: [{
                 label: dataOneLabel,
                 data: dataOne,
-                borderColor: 'rgb(255, 99, 132)',
+                borderColor: color,
+                backgroundColor: color,
                 fill: false,
                 // this dataset is drawn below
                 order: 1
@@ -114,4 +130,34 @@ function plotMixedData(xAxis, dataOne, dataOneLabel, dataTwo, dataTwoLabel) {
                 } 
         }
     });
+}
+
+// Function to update the chart type
+// callback function for radio button selection
+function updateChart(n) {
+    if(n==0) {
+        chartType = 'bar';
+    }
+    else {
+        chartType = 'line';
+    }
+    console.log(chartId);
+    if(chartId.length == 1) {
+        if(chartId[0] == 0) {
+            plotSingleData(eventData.hourly.dates, eventData.hourly.events, `No. of ${statsType} Events`);
+        }
+        if(chartId[0] == 1) {
+            plotSingleData(eventData.daily.dates, eventData.daily.events, `No. of ${statsType} Events`);
+        }
+    }
+    else {
+        plotDataForStats(chartId[1]);
+    }
+    
+}
+
+// generates random color for chart on each load
+function randomColor() {
+    var o = Math.round, r = Math.random, s = 255;
+    return 'rgb(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ')';
 }

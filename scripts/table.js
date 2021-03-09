@@ -1,12 +1,16 @@
+// TABLE JS
+// Functions for table
+
+
+// Function to populate table as per selection
 function populateTable(n) {
     currentTable = n;
-    document.getElementById("eventsTable").classList.add("d-none");
-    document.getElementById("statsTable").classList.add("d-none");
-    document.getElementById("poiTable").classList.add("d-none");
+    hideElementById(["eventsTable", "statsTable", "poiTable"]);
     let len = null, table = null;
     switch(n) {
         case 0: 
             document.getElementById("eventsTable").classList.remove("d-none");
+            document.getElementById("searchText").placeholder = "Search dates";
             len = eventData.hourly.dates.length;
             table = document.getElementById("eventsTableBody");
             table.innerHTML = "";
@@ -20,6 +24,7 @@ function populateTable(n) {
             break;
         case 1:
             document.getElementById("eventsTable").classList.remove("d-none");
+            document.getElementById("searchText").placeholder = "Search dates";
             len = eventData.daily.dates.length;
             table = document.getElementById("eventsTableBody");
             table.innerHTML = "";
@@ -33,6 +38,7 @@ function populateTable(n) {
             break;
         case 2:
             document.getElementById("statsTable").classList.remove("d-none");
+            document.getElementById("searchText").placeholder = "Search dates";
             len = statsData.hourly.dates.length;
             table = document.getElementById("statsTableBody");
             table.innerHTML = "";
@@ -50,6 +56,7 @@ function populateTable(n) {
             break;
         case 3:
             document.getElementById("statsTable").classList.remove("d-none");
+            document.getElementById("searchText").placeholder = "Search dates";
             len = statsData.daily.dates.length;
             table = document.getElementById("statsTableBody");
             table.innerHTML = "";
@@ -68,6 +75,7 @@ function populateTable(n) {
             break;
         case 4:
             document.getElementById("poiTable").classList.remove("d-none");
+            document.getElementById("searchText").placeholder = "Search POI names";
             len = poiData.ids.length;
             table = document.getElementById("poiTableBody");
             table.innerHTML = "";
@@ -82,14 +90,15 @@ function populateTable(n) {
                 cell = row.insertCell(-1);
                 cell.innerHTML = poiData.lons[i];
             }
-          
-          
             break;
         
         default: break;
     }
 }
 
+// Function to update cell styling for search text
+// called over each entry on search bar
+// callback for searchbar input
 function updateVal() {
     let searchString = document.getElementById("searchText").value;
     
