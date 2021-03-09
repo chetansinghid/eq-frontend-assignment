@@ -3,6 +3,9 @@
 
 The code is for the front end compoenents for the chart, table and map visualizations for EQ API data.
 
+Live site link: https://chetansinghid.github.io/eq-frontend-assignment/
+Link for API assignment glitch repo: https://glitch.com/edit/#!/proximal-ring-pipe
+
 ## Some notes for EQ Team
 
 ### Note: 
